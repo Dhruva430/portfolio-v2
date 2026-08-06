@@ -39,9 +39,10 @@ export default function MainSequence() {
     gsap.set(bar,    { scaleX: progress });
 
     // ── Services overlay ──
-    // Fades IN: 0.45 → 0.62 | Holds | Fades OUT: 0.80 → 0.95
-    const svcFadeIn  = { start: 0.45, end: 0.62 };
-    const svcFadeOut = { start: 0.80, end: 0.95 };
+    // Fades IN: 0.42 → 0.58 | Holds over the final frame | Fades OUT with the
+    // canvas dissolve so the pin releases into clean black.
+    const svcFadeIn  = { start: 0.42, end: 0.58 };
+    const svcFadeOut = { start: 0.86, end: 0.99 };
     let svcOpacity = 0;
     if (progress >= svcFadeIn.start && progress <= svcFadeIn.end) {
       svcOpacity = (progress - svcFadeIn.start) / (svcFadeIn.end - svcFadeIn.start);
@@ -66,7 +67,7 @@ export default function MainSequence() {
       <CanvasScrubber
         framePath="main"
         totalFrames={66}
-        pixelsPerFrame={55}
+        pixelsPerFrame={28}
         onProgress={handleProgress}
         priority
       >

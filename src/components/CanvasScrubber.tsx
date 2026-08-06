@@ -12,6 +12,12 @@ interface CanvasScrubberProps {
   className?: string;
   /** Pixels of scroll required per frame — higher = longer hold */
   pixelsPerFrame?: number;
+  /**
+   * Fraction of the pinned range reserved after the last frame. The final frame
+   * holds through it while the canvas dissolves, so the pin releases into black
+   * instead of cutting mid-image.
+   */
+  tailHold?: number;
   onProgress?: (progress: number) => void;
   children?: React.ReactNode;
   /** If true, all frames are fetched with high browser priority */
@@ -22,7 +28,8 @@ export default function CanvasScrubber({
   framePath,
   totalFrames = 66,
   className = "",
-  pixelsPerFrame = 50,
+  pixelsPerFrame = 28,
+  tailHold = 0.16,
   onProgress,
   children,
   priority = false,
@@ -30,52 +37,63 @@ export default function CanvasScrubber({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pinRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [images, setImages] = useState<HTMLImageElement[]>([]);
+  // Frames live in a ref: the ScrollTrigger must not be torn down and rebuilt
+  // every time another image lands.
+  const imagesRef = useRef<HTMLImageElement[]>([]);
+  // Set by the trigger effect so a late-arriving image can repaint the frame
+  // currently under the playhead.
+  const redrawRef = useRef<(() => void) | null>(null);
   const [loadedCount, setLoadedCount] = useState(0);
 
   useEffect(() => {
-    let count = 0;
     const imgArray: HTMLImageElement[] = new Array(totalFrames);
+    imagesRef.current = imgArray;
 
-    const onLoad = () => {
+    let count = 0;
+    let raf: number | null = null;
+    let cancelled = false;
+
+    // Batch progress into one state update per frame — 66 individual setStates
+    // during load is a lot of wasted rendering.
+    const flush = () => {
+      raf = null;
+      if (!cancelled) setLoadedCount(count);
+    };
+
+    const onSettled = () => {
+      if (cancelled) return;
       count++;
-      setLoadedCount(count);
+      redrawRef.current?.();
+      if (raf === null) raf = requestAnimationFrame(flush);
     };
 
-    // Load frame 1 first with high priority
-    const firstImg = new Image();
-    firstImg.fetchPriority = "high";
-    firstImg.src = `/frames/${framePath}/001.webp`;
-    firstImg.onload = () => {
-      imgArray[0] = firstImg;
-      onLoad();
-    };
-    imgArray[0] = firstImg;
-
-    // Load remaining frames
-    for (let i = 2; i <= totalFrames; i++) {
+    for (let i = 1; i <= totalFrames; i++) {
       const img = new Image();
-      const paddedIndex = String(i).padStart(3, "0");
-      img.src = `/frames/${framePath}/${paddedIndex}.webp`;
-      if (priority) img.fetchPriority = "high";
-      img.onload = () => {
-        imgArray[i - 1] = img;
-        onLoad();
-      };
+      // Frame 1 is what the viewer sees first, so it always jumps the queue.
+      if (priority || i === 1) img.fetchPriority = "high";
+      img.src = `/frames/${framePath}/${String(i).padStart(3, "0")}.webp`;
       imgArray[i - 1] = img;
+
+      if (img.complete && img.naturalWidth > 0) {
+        onSettled();
+      } else {
+        img.onload = onSettled;
+        // Count errors too, otherwise one missing file pins the loader forever.
+        img.onerror = onSettled;
+      }
     }
 
-    setImages(imgArray);
+    return () => {
+      cancelled = true;
+      if (raf !== null) cancelAnimationFrame(raf);
+    };
   }, [framePath, totalFrames, priority]);
 
+  // Built once on mount — NOT gated on images being loaded. The pin has to
+  // reserve its scroll space immediately, or every section below the hero
+  // shifts down when it appears and restored scroll positions land wrong.
   useEffect(() => {
-    if (
-      loadedCount < totalFrames ||
-      !canvasRef.current ||
-      !containerRef.current ||
-      !pinRef.current
-    )
-      return;
+    if (!canvasRef.current || !containerRef.current || !pinRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -96,10 +114,14 @@ export default function CanvasScrubber({
         totalFrames - 1,
         Math.max(0, Math.round(index))
       );
+      // Recorded before the readiness check so redrawRef can retry this exact
+      // frame once its image finishes decoding.
       currentFrame = frameIndex;
 
-      const img = images[frameIndex];
-      if (!img) return;
+      const img = imagesRef.current[frameIndex];
+      // Drawing a half-decoded image is a no-op that would also clear the
+      // canvas — keep the last good frame on screen instead.
+      if (!img || !img.complete || img.naturalWidth === 0) return;
 
       const canvasWidth = window.innerWidth;
       const canvasHeight = window.innerHeight;
@@ -128,12 +150,31 @@ export default function CanvasScrubber({
       ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
     };
 
-    renderFrame(0);
+    redrawRef.current = () => {
+      if (currentFrame >= 0) renderFrame(currentFrame);
+    };
 
-    const scrollDistance = Math.max(
-      window.innerHeight * 2.5,
-      totalFrames * pixelsPerFrame
-    );
+    // Frames consume everything before the tail; the tail is pure dissolve.
+    const frameSpan = Math.max(0.01, 1 - tailHold);
+
+    // Grow the pin by the tail so frame pacing itself is unchanged by it.
+    const scrollDistance =
+      Math.max(window.innerHeight * 1.5, totalFrames * pixelsPerFrame) /
+      frameSpan;
+
+    const applyOutro = (progress: number) => {
+      const t = Math.min(1, Math.max(0, (progress - frameSpan) / tailHold));
+      // ease-in — the frame stays crisp, then falls away quickly at the very end
+      const eased = t * t * t;
+      gsap.set(canvas, { opacity: 1 - eased, scale: 1 + eased * 0.08 });
+    };
+
+    // Single source of truth for "what should be on screen at this progress".
+    const sync = (progress: number) => {
+      onProgress?.(progress);
+      renderFrame(Math.min(1, progress / frameSpan) * (totalFrames - 1));
+      applyOutro(progress);
+    };
 
     const trigger = ScrollTrigger.create({
       trigger: containerRef.current,
@@ -141,25 +182,36 @@ export default function CanvasScrubber({
       end: `+=${scrollDistance}`,
       pin: pinRef.current,
       pinSpacing: true,
-      scrub: true,
+      // small lag so the frame flip eases toward the scroll position
+      scrub: 0.35,
       anticipatePin: 1,
       invalidateOnRefresh: true,
-      onUpdate: (self) => {
-        const progress = self.progress;
-        onProgress?.(progress);
-        renderFrame(progress * (totalFrames - 1));
-      },
+      onUpdate: (self) => sync(self.progress),
+      // Boundary guards for fast flicks that skip the final onUpdate.
+      onLeave: () => sync(1),
+      onLeaveBack: () => sync(0),
+      onEnterBack: (self) => sync(self.progress),
+      // After a resize/refresh the range moved — re-adopt the new progress
+      // rather than keeping whatever frame happened to be drawn.
+      onRefresh: (self) => sync(self.progress),
     });
 
     updateCanvasSize();
     window.addEventListener("resize", updateCanvasSize);
     ScrollTrigger.refresh();
 
+    // Adopt the position the page actually loaded at. Without this the canvas
+    // sits on frame 1 at full opacity until the next scroll event, which is
+    // what made a mid-page refresh look broken on the way back up.
+    sync(trigger.progress);
+
     return () => {
       window.removeEventListener("resize", updateCanvasSize);
+      redrawRef.current = null;
       trigger.kill();
+      gsap.set(canvas, { clearProps: "opacity,transform" });
     };
-  }, [loadedCount, totalFrames, images, pixelsPerFrame, onProgress]);
+  }, [totalFrames, pixelsPerFrame, tailHold, onProgress]);
 
   return (
     <div ref={containerRef} className={`relative w-full ${className}`}>
@@ -178,6 +230,7 @@ export default function CanvasScrubber({
         <canvas
           ref={canvasRef}
           className="w-full h-full block object-cover pointer-events-none select-none"
+          style={{ willChange: "opacity, transform", transformOrigin: "center" }}
         />
         {children}
       </div>

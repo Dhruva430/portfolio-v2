@@ -45,6 +45,7 @@ const works = [
 
 export default function WorksSection() {
   const sectionRef = useRef<HTMLElement>(null);
+  const bgRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
@@ -54,6 +55,23 @@ export default function WorksSection() {
     if (!section) return;
 
     const ctx = gsap.context(() => {
+      // Background rises out of the black the hero sequence dissolved into,
+      // so the pin release reads as one continuous transition.
+      gsap.fromTo(
+        bgRef.current,
+        { opacity: 0 },
+        {
+          opacity: 1,
+          ease: "none",
+          scrollTrigger: {
+            trigger: section,
+            start: "top bottom",
+            end: "top 45%",
+            scrub: 0.35,
+          },
+        }
+      );
+
       // Heading entrance
       gsap.fromTo(
         headingRef.current,
@@ -116,7 +134,7 @@ export default function WorksSection() {
       className="relative w-full min-h-screen overflow-hidden"
     >
       {/* ── Video background ── */}
-      <div className="absolute inset-0 z-0">
+      <div ref={bgRef} className="absolute inset-0 z-0" style={{ opacity: 0 }}>
         <video
           ref={videoRef}
           src="/frames/herobg-2.webm"
