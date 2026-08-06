@@ -26,37 +26,18 @@ export default function SmoothScroll({
     }
 
     const lenis = new Lenis({
-      duration: 0.9,
+      duration: 1.1,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: "vertical",
       gestureOrientation: "vertical",
       smoothWheel: true,
-      wheelMultiplier: 1.4,
-      touchMultiplier: 2,
+      wheelMultiplier: 0.9,
+      touchMultiplier: 1.5,
     });
 
     setLenis(lenis);
 
     lenis.on("scroll", ScrollTrigger.update);
-
-    ScrollTrigger.scrollerProxy(document.documentElement, {
-      scrollTop(value) {
-        if (value !== undefined) {
-          // force, or Lenis rejects the write whenever a locked programmatic
-          // scroll is in flight and ScrollTrigger loses its position.
-          lenis.scrollTo(value, { immediate: true, force: true });
-        }
-        return lenis.scroll;
-      },
-      getBoundingClientRect() {
-        return {
-          top: 0,
-          left: 0,
-          width: window.innerWidth,
-          height: window.innerHeight,
-        };
-      },
-    });
 
     const tickerCallback = (time: number) => {
       lenis.raf(time * 1000);
@@ -65,21 +46,13 @@ export default function SmoothScroll({
     gsap.ticker.add(tickerCallback);
     gsap.ticker.lagSmoothing(0);
 
-    const onRefresh = () => lenis.resize();
-
-    ScrollTrigger.addEventListener("refresh", onRefresh);
-    ScrollTrigger.refresh();
-
     return () => {
       if ("scrollRestoration" in history) {
         history.scrollRestoration = "auto";
       }
-      ScrollTrigger.removeEventListener("refresh", onRefresh);
       gsap.ticker.remove(tickerCallback);
       setLenis(null);
       lenis.destroy();
-      ScrollTrigger.scrollerProxy(document.documentElement, {});
-      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     };
   }, []);
 

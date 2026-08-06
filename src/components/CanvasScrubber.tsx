@@ -10,12 +10,13 @@ interface CanvasScrubberProps {
   framePath: "main" | "eyes";
   totalFrames: number;
   className?: string;
-  /** Pixels of scroll required per frame — higher = longer hold */
-  pixelsPerFrame?: number;
+  /** Multiplier of viewport height for the frame-scrub distance (e.g. 1.2 = 1.2x screen height) */
+  scrollMultiplier?: number;
   /**
    * Fraction of the pinned range reserved after the last frame. The final frame
    * holds through it while the canvas dissolves, so the pin releases into black
-   * instead of cutting mid-image.
+   * instead of cutting mid-image. Added on top of scrollMultiplier, which keeps
+   * describing the frame-scrub distance alone.
    */
   tailHold?: number;
   onProgress?: (progress: number) => void;
@@ -34,7 +35,7 @@ export default function CanvasScrubber({
   framePath,
   totalFrames = 66,
   className = "",
-  pixelsPerFrame = 28,
+  scrollMultiplier = 1.25,
   tailHold = 0.16,
   onProgress,
   onComplete,
@@ -59,6 +60,7 @@ export default function CanvasScrubber({
     onCompleteRef.current = onComplete;
   }, [onComplete]);
 
+  // Preload frames
   useEffect(() => {
     const imgArray: HTMLImageElement[] = new Array(totalFrames);
     imagesRef.current = imgArray;
@@ -103,39 +105,37 @@ export default function CanvasScrubber({
     };
   }, [framePath, totalFrames, priority]);
 
-  // Built once on mount — NOT gated on images being loaded. The pin has to
-  // reserve its scroll space immediately, or every section below the hero
-  // shifts down when it appears and restored scroll positions land wrong.
+  // Canvas render & GSAP ScrollTrigger. Built once on mount — NOT gated on
+  // images being loaded. The pin has to reserve its scroll space immediately,
+  // or every section below the hero shifts down when it appears and restored
+  // scroll positions land wrong.
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current || !pinRef.current) return;
 
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return;
 
-    let currentFrame = -1;
+    // What the playhead wants vs what is actually painted. They diverge while
+    // an image is still decoding, and that gap is what lets a late arrival
+    // repaint the correct frame instead of being dropped.
+    let wantedFrame = 0;
+    let lastRenderedFrame = -1;
 
-    const updateCanvasSize = () => {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      if (currentFrame >= 0) renderFrame(currentFrame);
-    };
-
-    const renderFrame = (index: number) => {
+    const renderFrame = (rawIndex: number, force = false) => {
       const frameIndex = Math.min(
         totalFrames - 1,
-        Math.max(0, Math.round(index))
+        Math.max(0, Math.round(rawIndex))
       );
-      // Recorded before the readiness check so redrawRef can retry this exact
-      // frame once its image finishes decoding.
-      currentFrame = frameIndex;
+      wantedFrame = frameIndex;
+
+      if (!force && frameIndex === lastRenderedFrame) return;
 
       const img = imagesRef.current[frameIndex];
-      // Drawing a half-decoded image is a no-op that would also clear the
-      // canvas — keep the last good frame on screen instead.
+      // Leave lastRenderedFrame untouched so this frame is retried once its
+      // image decodes; the previous good frame stays on screen meanwhile.
       if (!img || !img.complete || img.naturalWidth === 0) return;
+      lastRenderedFrame = frameIndex;
 
       const canvasWidth = window.innerWidth;
       const canvasHeight = window.innerHeight;
@@ -153,28 +153,36 @@ export default function CanvasScrubber({
         offsetY = (canvasHeight - drawHeight) / 2;
       } else {
         drawWidth = canvasHeight * imgRatio;
-        // Portrait (mobile): anchor left edge so right portion bleeds off-screen.
-        // Landscape (desktop): keep classic center crop.
-        offsetX = canvasHeight > canvasWidth
-          ? (canvasWidth - drawWidth) * 0.27   // portrait: 25% into the overflow → less left
-          : (canvasWidth - drawWidth) / 2;     // landscape: classic center crop
+        offsetX =
+          canvasHeight > canvasWidth
+            ? (canvasWidth - drawWidth) * 0.27
+            : (canvasWidth - drawWidth) / 2;
       }
 
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
       ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
     };
 
-    redrawRef.current = () => {
-      if (currentFrame >= 0) renderFrame(currentFrame);
+    redrawRef.current = () => renderFrame(wantedFrame, true);
+
+    const updateCanvasSize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      renderFrame(wantedFrame, true);
     };
+
+    updateCanvasSize();
 
     // Frames consume everything before the tail; the tail is pure dissolve.
     const frameSpan = Math.max(0.01, 1 - tailHold);
 
     // Grow the pin by the tail so frame pacing itself is unchanged by it.
-    const scrollDistance =
-      Math.max(window.innerHeight * 1.5, totalFrames * pixelsPerFrame) /
-      frameSpan;
+    const scrollDistance = Math.round(
+      (window.innerHeight * scrollMultiplier) / frameSpan
+    );
 
     const applyOutro = (progress: number) => {
       const t = Math.min(1, Math.max(0, (progress - frameSpan) / tailHold));
@@ -205,42 +213,48 @@ export default function CanvasScrubber({
       }
     };
 
-    const trigger = ScrollTrigger.create({
-      trigger: containerRef.current,
-      start: "top top",
-      end: `+=${scrollDistance}`,
-      pin: pinRef.current,
-      pinSpacing: true,
-      // small lag so the frame flip eases toward the scroll position
-      scrub: 0.35,
-      anticipatePin: 1,
-      invalidateOnRefresh: true,
-      onUpdate: (self) => sync(self.progress),
-      // Boundary guards for fast flicks that skip the final onUpdate.
-      onLeave: () => sync(1),
-      onLeaveBack: () => sync(0),
-      onEnterBack: (self) => sync(self.progress),
-      // After a resize/refresh the range moved — re-adopt the new progress
-      // rather than keeping whatever frame happened to be drawn.
-      onRefresh: (self) => sync(self.progress),
+    // scrub only smooths a linked animation, so the playhead is tweened rather
+    // than read straight off the trigger — that is what eases the frame flips.
+    const playhead = { progress: 0 };
+
+    const tween = gsap.to(playhead, {
+      progress: 1,
+      ease: "none",
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top top",
+        end: `+=${scrollDistance}`,
+        pin: pinRef.current,
+        pinSpacing: true,
+        scrub: 0.15,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        // Boundary guards for fast flicks that skip the final onUpdate.
+        onLeave: () => sync(1),
+        onLeaveBack: () => sync(0),
+        // After a resize/refresh the range moved — re-adopt the new progress
+        // rather than keeping whatever frame happened to be drawn.
+        onRefresh: (self) => sync(self.progress),
+      },
+      onUpdate: () => sync(playhead.progress),
     });
 
-    updateCanvasSize();
     window.addEventListener("resize", updateCanvasSize);
     ScrollTrigger.refresh();
 
     // Adopt the position the page actually loaded at. Without this the canvas
     // sits on frame 1 at full opacity until the next scroll event, which is
     // what made a mid-page refresh look broken on the way back up.
-    sync(trigger.progress);
+    sync(tween.scrollTrigger?.progress ?? 0);
 
     return () => {
       window.removeEventListener("resize", updateCanvasSize);
       redrawRef.current = null;
-      trigger.kill();
+      tween.scrollTrigger?.kill();
+      tween.kill();
       gsap.set(canvas, { clearProps: "opacity,transform" });
     };
-  }, [totalFrames, pixelsPerFrame, tailHold, onProgress]);
+  }, [totalFrames, scrollMultiplier, tailHold, onProgress]);
 
   return (
     <div ref={containerRef} className={`relative w-full ${className}`}>

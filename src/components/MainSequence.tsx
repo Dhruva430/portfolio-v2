@@ -43,36 +43,34 @@ export default function MainSequence() {
   }, []);
 
   const handleProgress = useCallback((progress: number) => {
-    const overlay   = overlayRef.current;
     const title     = titleRef.current;
     const hint      = hintRef.current;
     const bar       = progressRef.current;
     const header    = headerRef.current;
     const svcOverlay = servicesOverlayRef.current;
-    if (!overlay || !title || !hint || !bar) return;
+    if (!title || !hint || !bar) return;
 
     // ── First overlay (title + header) ──
-    const fadeStart = 0.08;
-    const fadeEnd   = 0.38;
+    const fadeStart = 0.04;
+    const fadeEnd   = 0.32;
     const titleOpacity =
       progress <= fadeStart ? 1
       : progress >= fadeEnd ? 0
       : 1 - (progress - fadeStart) / (fadeEnd - fadeStart);
 
-    const titleY       = progress * -48;
-    const hintOpacity  = Math.max(0, 1 - progress * 4);
-    const headerOpacity = titleOpacity; // same curve
+    const titleY       = progress * -36;
+    const hintOpacity  = Math.max(0, 1 - progress * 4.5);
+    const headerOpacity = titleOpacity;
 
     gsap.set(title,  { opacity: titleOpacity, y: titleY });
-    gsap.set(hint,   { opacity: hintOpacity,  y: progress * 16 });
+    gsap.set(hint,   { opacity: hintOpacity,  y: progress * 14 });
     if (header) gsap.set(header, { opacity: headerOpacity, y: titleY });
     gsap.set(bar,    { scaleX: progress });
 
-    // ── Services overlay ──
-    // Fades IN: 0.42 → 0.58 | Holds over the final frame | Fades OUT with the
-    // canvas dissolve so the pin releases into clean black.
-    const svcFadeIn  = { start: 0.42, end: 0.58 };
-    const svcFadeOut = { start: 0.86, end: 0.99 };
+    // ── Services overlay: "What We Do" ──
+    // Fades IN: 0.38 → 0.54 | Holds: 0.54 → 0.78 | Fades OUT: 0.78 → 0.94
+    const svcFadeIn  = { start: 0.38, end: 0.54 };
+    const svcFadeOut = { start: 0.78, end: 0.94 };
     let svcOpacity = 0;
     if (progress >= svcFadeIn.start && progress <= svcFadeIn.end) {
       svcOpacity = (progress - svcFadeIn.start) / (svcFadeIn.end - svcFadeIn.start);
@@ -97,7 +95,7 @@ export default function MainSequence() {
       <CanvasScrubber
         framePath="main"
         totalFrames={66}
-        pixelsPerFrame={28}
+        scrollMultiplier={1.2}
         onProgress={handleProgress}
         onComplete={handleSequenceComplete}
         priority
@@ -205,4 +203,3 @@ export default function MainSequence() {
     </section>
   );
 }
-
