@@ -19,6 +19,12 @@ interface CanvasScrubberProps {
    */
   tailHold?: number;
   onProgress?: (progress: number) => void;
+  /**
+   * Fired when the last frame is reached going forward — before the dissolve
+   * tail, so a handler can take over the remaining scroll. Re-arms if the
+   * viewer scrolls back below the last frame.
+   */
+  onComplete?: () => void;
   children?: React.ReactNode;
   /** If true, all frames are fetched with high browser priority */
   priority?: boolean;
@@ -31,6 +37,7 @@ export default function CanvasScrubber({
   pixelsPerFrame = 28,
   tailHold = 0.16,
   onProgress,
+  onComplete,
   children,
   priority = false,
 }: CanvasScrubberProps) {
@@ -43,7 +50,14 @@ export default function CanvasScrubber({
   // Set by the trigger effect so a late-arriving image can repaint the frame
   // currently under the playhead.
   const redrawRef = useRef<(() => void) | null>(null);
+  // Held in a ref so an unstable callback identity can never rebuild the
+  // ScrollTrigger — rebuilding it mid-scroll is what broke restored positions.
+  const onCompleteRef = useRef(onComplete);
   const [loadedCount, setLoadedCount] = useState(0);
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     const imgArray: HTMLImageElement[] = new Array(totalFrames);
@@ -169,11 +183,26 @@ export default function CanvasScrubber({
       gsap.set(canvas, { opacity: 1 - eased, scale: 1 + eased * 0.08 });
     };
 
+    // null until the first sync establishes a baseline, so a page that loads
+    // already past the sequence does not immediately fire onComplete.
+    let framesDone: boolean | null = null;
+
     // Single source of truth for "what should be on screen at this progress".
     const sync = (progress: number) => {
       onProgress?.(progress);
       renderFrame(Math.min(1, progress / frameSpan) * (totalFrames - 1));
       applyOutro(progress);
+
+      // Fire the moment the final frame lands — not at the pin release — so
+      // the dissolve tail plays out under the auto-advance rather than
+      // waiting on the viewer to scroll through it.
+      const done = progress >= frameSpan;
+      if (framesDone === null) {
+        framesDone = done;
+      } else if (done !== framesDone) {
+        framesDone = done;
+        if (done) onCompleteRef.current?.();
+      }
     };
 
     const trigger = ScrollTrigger.create({

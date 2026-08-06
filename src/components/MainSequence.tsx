@@ -3,6 +3,7 @@
 import React, { useCallback, useRef } from "react";
 import gsap from "gsap";
 import CanvasScrubber from "./CanvasScrubber";
+import { scrollToElement } from "@/lib/lenis";
 
 export default function MainSequence() {
   const overlayRef    = useRef<HTMLDivElement>(null);
@@ -11,6 +12,35 @@ export default function MainSequence() {
   const progressRef   = useRef<HTMLDivElement>(null);
   const headerRef     = useRef<HTMLElement>(null);
   const servicesOverlayRef = useRef<HTMLDivElement>(null);
+  const hasAutoAdvancedRef = useRef(false);
+
+  // The last frame has landed. Take over the rest of the scroll: the dissolve
+  // tail plays out under the auto-advance and the viewer is delivered to the
+  // services section instead of being left to scroll out of the black.
+  const handleSequenceComplete = useCallback(() => {
+    if (hasAutoAdvancedRef.current) return;
+
+    const target = document.getElementById("services");
+    if (!target) return;
+
+    // Reduced motion still gets taken to the section — it just skips the
+    // travel rather than doing nothing at all.
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    requestAnimationFrame(() => {
+      const rect = target.getBoundingClientRect();
+      // They already carried themselves in on momentum — pulling them back to
+      // the top of the section would feel like the page fighting them.
+      if (rect.top < window.innerHeight * 0.5) return;
+
+      hasAutoAdvancedRef.current = true;
+      // Covers the dissolve tail plus the hero clearing the viewport, so it
+      // needs longer than a plain section-to-section jump.
+      scrollToElement(target, { duration: 1.2, immediate: reducedMotion });
+    });
+  }, []);
 
   const handleProgress = useCallback((progress: number) => {
     const overlay   = overlayRef.current;
@@ -69,6 +99,7 @@ export default function MainSequence() {
         totalFrames={66}
         pixelsPerFrame={28}
         onProgress={handleProgress}
+        onComplete={handleSequenceComplete}
         priority
       >
         {/* ── First overlay: title + Creative Studio ── */}

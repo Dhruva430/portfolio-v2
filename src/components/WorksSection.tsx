@@ -55,8 +55,8 @@ export default function WorksSection() {
     if (!section) return;
 
     const ctx = gsap.context(() => {
-      // Background rises out of the black the hero sequence dissolved into,
-      // so the pin release reads as one continuous transition.
+      // Background rises out of the near-black of the preceding section so the
+      // video does not pop in at full brightness the moment it enters.
       gsap.fromTo(
         bgRef.current,
         { opacity: 0 },

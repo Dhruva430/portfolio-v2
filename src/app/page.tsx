@@ -11,6 +11,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-black text-neutral-100 selection:bg-red-900 selection:text-white overflow-x-hidden">
       <MainSequence />
+      <ServicesSection />
       <WorksSection />
       <TestimonialsSection />
       <CTASection />

@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import Lenis from "@studio-freight/lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { setLenis } from "@/lib/lenis";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -34,12 +35,16 @@ export default function SmoothScroll({
       touchMultiplier: 2,
     });
 
+    setLenis(lenis);
+
     lenis.on("scroll", ScrollTrigger.update);
 
     ScrollTrigger.scrollerProxy(document.documentElement, {
       scrollTop(value) {
         if (value !== undefined) {
-          lenis.scrollTo(value, { immediate: true });
+          // force, or Lenis rejects the write whenever a locked programmatic
+          // scroll is in flight and ScrollTrigger loses its position.
+          lenis.scrollTo(value, { immediate: true, force: true });
         }
         return lenis.scroll;
       },
@@ -71,6 +76,7 @@ export default function SmoothScroll({
       }
       ScrollTrigger.removeEventListener("refresh", onRefresh);
       gsap.ticker.remove(tickerCallback);
+      setLenis(null);
       lenis.destroy();
       ScrollTrigger.scrollerProxy(document.documentElement, {});
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
