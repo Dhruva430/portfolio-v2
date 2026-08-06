@@ -10,8 +10,8 @@ interface CanvasScrubberProps {
   framePath: "main" | "eyes";
   totalFrames: number;
   className?: string;
-  /** Pixels of scroll required per frame — higher = longer hold */
-  pixelsPerFrame?: number;
+  /** Multiplier of viewport height for the total scrub scroll distance (e.g. 1.2 = 1.2x screen height) */
+  scrollMultiplier?: number;
   onProgress?: (progress: number) => void;
   children?: React.ReactNode;
   /** If true, all frames are fetched with high browser priority */
@@ -22,7 +22,7 @@ export default function CanvasScrubber({
   framePath,
   totalFrames = 66,
   className = "",
-  pixelsPerFrame = 50,
+  scrollMultiplier = 1.25,
   onProgress,
   children,
   priority = false,
@@ -33,6 +33,7 @@ export default function CanvasScrubber({
   const [images, setImages] = useState<HTMLImageElement[]>([]);
   const [loadedCount, setLoadedCount] = useState(0);
 
+  // Preload frames
   useEffect(() => {
     let count = 0;
     const imgArray: HTMLImageElement[] = new Array(totalFrames);
@@ -68,6 +69,7 @@ export default function CanvasScrubber({
     setImages(imgArray);
   }, [framePath, totalFrames, priority]);
 
+  // Canvas render & GSAP ScrollTrigger
   useEffect(() => {
     if (
       loadedCount < totalFrames ||
@@ -78,28 +80,22 @@ export default function CanvasScrubber({
       return;
 
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return;
 
-    let currentFrame = -1;
+    let lastRenderedFrame = -1;
 
-    const updateCanvasSize = () => {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      if (currentFrame >= 0) renderFrame(currentFrame);
-    };
-
-    const renderFrame = (index: number) => {
+    const renderFrame = (rawIndex: number, force = false) => {
       const frameIndex = Math.min(
         totalFrames - 1,
-        Math.max(0, Math.round(index))
+        Math.max(0, Math.round(rawIndex))
       );
-      currentFrame = frameIndex;
+
+      if (!force && frameIndex === lastRenderedFrame) return;
+      lastRenderedFrame = frameIndex;
 
       const img = images[frameIndex];
-      if (!img) return;
+      if (!img || !img.complete) return;
 
       const canvasWidth = window.innerWidth;
       const canvasHeight = window.innerHeight;
@@ -117,49 +113,59 @@ export default function CanvasScrubber({
         offsetY = (canvasHeight - drawHeight) / 2;
       } else {
         drawWidth = canvasHeight * imgRatio;
-        // Portrait (mobile): anchor left edge so right portion bleeds off-screen.
-        // Landscape (desktop): keep classic center crop.
-        offsetX = canvasHeight > canvasWidth
-          ? (canvasWidth - drawWidth) * 0.27   // portrait: 25% into the overflow → less left
-          : (canvasWidth - drawWidth) / 2;     // landscape: classic center crop
+        offsetX =
+          canvasHeight > canvasWidth
+            ? (canvasWidth - drawWidth) * 0.27
+            : (canvasWidth - drawWidth) / 2;
       }
 
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
       ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
     };
 
-    renderFrame(0);
+    const updateCanvasSize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      renderFrame(lastRenderedFrame >= 0 ? lastRenderedFrame : 0, true);
+    };
 
-    const scrollDistance = Math.max(
-      window.innerHeight * 1.2,
-      totalFrames * pixelsPerFrame
-    );
+    updateCanvasSize();
 
-    const trigger = ScrollTrigger.create({
-      trigger: containerRef.current,
-      start: "top top",
-      end: `+=${scrollDistance}`,
-      pin: pinRef.current,
-      pinSpacing: true,
-      scrub: 1.2,
-      anticipatePin: 1,
-      invalidateOnRefresh: true,
-      onUpdate: (self) => {
-        const progress = self.progress;
-        onProgress?.(progress);
-        renderFrame(progress * (totalFrames - 1));
+    const scrollDistance = Math.round(window.innerHeight * scrollMultiplier);
+    const playhead = { frame: 0 };
+
+    const tween = gsap.to(playhead, {
+      frame: totalFrames - 1,
+      ease: "none",
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top top",
+        end: `+=${scrollDistance}`,
+        pin: pinRef.current,
+        pinSpacing: true,
+        scrub: 0.15,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          onProgress?.(self.progress);
+        },
+      },
+      onUpdate: () => {
+        renderFrame(playhead.frame);
       },
     });
 
-    updateCanvasSize();
     window.addEventListener("resize", updateCanvasSize);
-    ScrollTrigger.refresh();
 
     return () => {
       window.removeEventListener("resize", updateCanvasSize);
-      trigger.kill();
+      tween.scrollTrigger?.kill();
+      tween.kill();
     };
-  }, [loadedCount, totalFrames, images, pixelsPerFrame, onProgress]);
+  }, [loadedCount, totalFrames, images, scrollMultiplier, onProgress]);
 
   return (
     <div ref={containerRef} className={`relative w-full ${className}`}>
