@@ -9,7 +9,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navLinks = [
-    { label: "Work", href: "#work" },
+    { label: "Work", href: "#works" },
     { label: "Services", href: "#services" },
     { label: "Testimonials", href: "#testimonials" },
     { label: "Contact", href: "#contact" },

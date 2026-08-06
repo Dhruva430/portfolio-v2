@@ -92,3 +92,8 @@ html.lenis body {
 .marquee-container:hover .animate-marquee-reverse {
   animation-play-state: paused;
 }
+
+/* Hide scrollbar on horizontal carousels */
+.overflow-x-auto::-webkit-scrollbar {
+  display: none;
+}

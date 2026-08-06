@@ -131,7 +131,7 @@ export default function CanvasScrubber({
     renderFrame(0);
 
     const scrollDistance = Math.max(
-      window.innerHeight * 2.5,
+      window.innerHeight * 1.2,
       totalFrames * pixelsPerFrame
     );
 
@@ -141,7 +141,7 @@ export default function CanvasScrubber({
       end: `+=${scrollDistance}`,
       pin: pinRef.current,
       pinSpacing: true,
-      scrub: true,
+      scrub: 1.2,
       anticipatePin: 1,
       invalidateOnRefresh: true,
       onUpdate: (self) => {
