@@ -3,13 +3,13 @@
 import React from "react";
 
 const socials = [
-  { name: "Instagram", href: "#" },
-  { name: "Behance",   href: "#" },
-  { name: "Dribbble",  href: "#" },
-  { name: "LinkedIn",  href: "#" },
+  { name: "GitHub",   href: "https://github.com/dhruva430" },
+  { name: "LinkedIn", href: "https://www.linkedin.com/in/dhruva430/" },
+  { name: "Website",  href: "https://dhruvakstore.tech" },
+  { name: "Email",    href: "mailto:rdhruva12345@gmail.com" },
 ];
 
-const services = ["Photo Editing", "Video Editing", "Shorts", "Thumbnail Design"];
+const services = ["Backend", "Full Stack", "Frontend", "Shopify"];
 
 export default function Footer() {
   return (
@@ -24,7 +24,7 @@ export default function Footer() {
               className="whitespace-nowrap flex-shrink-0 text-[clamp(5rem,18vw,14rem)] font-black tracking-wider leading-none text-neutral-100 px-8"
               style={{ fontFamily: "var(--font-outfit)" }}
             >
-              AM&nbsp;DESIGNS &nbsp;&nbsp;&nbsp; AM&nbsp;DESIGNS &nbsp;&nbsp;&nbsp; AM&nbsp;DESIGNS &nbsp;&nbsp;&nbsp;
+              DHRUVA&nbsp;KUSHWAHA &nbsp;&nbsp;&nbsp; DHRUVA&nbsp;KUSHWAHA &nbsp;&nbsp;&nbsp;
             </p>
           ))}
         </div>
@@ -36,10 +36,10 @@ export default function Footer() {
         {/* Top strip: tagline left, socials right */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-10">
           <div>
-            <p className="text-[14px] text-red-500 tracking-[0.35em] font-bold uppercase mb-1">Creative Studio</p>
-            <p className="text-[12px] text-neutral-400 tracking-[0.35em] uppercase mb-1">Est. 2026</p>
+            <p className="text-[14px] text-red-500 tracking-[0.35em] font-bold uppercase mb-1">Full Stack Developer</p>
+            <p className="text-[12px] text-neutral-400 tracking-[0.35em] uppercase mb-1">Backend Focused · Est. 2026</p>
             <p className="text-sm text-neutral-300 max-w-sm tracking-wide leading-relaxed">
-              Design and post-production studio helping creators and brands make their mark.
+              Go and Node APIs, Postgres data models, and the React frontends to finish the job. B.Tech, LNCT Bhopal.
             </p>
           </div>
 
@@ -65,7 +65,7 @@ export default function Footer() {
         {/* Bottom bar: copyright left, services right */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest">
-            © 2026 AM Designs · All Rights Reserved · India
+            © 2026 Dhruva Kushwaha · All Rights Reserved · Bhopal, India
           </p>
 
           {/* Service tags */}

@@ -18,9 +18,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AM Designs | Graphic Design & Video Editing",
+  title: "Dhruva Kushwaha | Full Stack Developer — Backend Focused",
   description:
-    "Premium graphic design and video editing services by AM Designs. Logos, branding, social media, posters, and cinematic video edits.",
+    "Full stack developer who builds fast, reliable web apps with TypeScript, Golang, React, and Next.js. Backend-focused: Go and Node APIs, PostgreSQL and Redis, plus frontend and Shopify builds.",
 };
 
 export default function RootLayout({

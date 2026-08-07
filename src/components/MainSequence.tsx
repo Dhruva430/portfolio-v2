@@ -67,7 +67,7 @@ export default function MainSequence() {
     if (header) gsap.set(header, { opacity: headerOpacity, y: titleY });
     gsap.set(bar,    { scaleX: progress });
 
-    // ── Services overlay: "What We Do" ──
+    // ── Services overlay: "What I Do" ──
     // Fades IN: 0.38 → 0.54 | Holds: 0.54 → 0.78 | Fades OUT: 0.78 → 0.94
     const svcFadeIn  = { start: 0.38, end: 0.54 };
     const svcFadeOut = { start: 0.78, end: 0.94 };
@@ -84,10 +84,10 @@ export default function MainSequence() {
   }, []);
 
   const services = [
-    { title: "Photo Editing",     desc: "High-end retouching, color grading, and creative composites" },
-    { title: "Video Editing",     desc: "Long-form, promos, and cinematic cuts" },
-    { title: "Shorts",            desc: "Reels, YouTube Shorts, and TikTok content" },
-    { title: "Thumbnail Design",  desc: "Click-worthy, high-CTR thumbnails for every platform" },
+    { title: "Backend",    desc: "Go and Node APIs, Postgres data modelling, Redis, RBAC" },
+    { title: "Full Stack", desc: "Whole features owned from schema to interface" },
+    { title: "Frontend",   desc: "React and Next.js interfaces built for real payloads" },
+    { title: "Shopify",    desc: "Custom themes, private apps, and headless storefronts" },
   ];
 
   return (
@@ -100,19 +100,19 @@ export default function MainSequence() {
         onComplete={handleSequenceComplete}
         priority
       >
-        {/* ── First overlay: title + Creative Studio ── */}
+        {/* ── First overlay: title + role ── */}
         <div
           ref={overlayRef}
           className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end py-6 sm:py-10 px-5 sm:px-10 mix-blend-difference"
         >
-          {/* header "Creative Studio · Est 2026" */}
+          {/* header "Full Stack Developer · Est 2026" */}
           <header
             ref={headerRef}
             className="w-full flex items-end justify-between"
           >
             <div className="flex flex-col gap-4">
               <span className="text-[9px] font-mono text-neutral-500 tracking-[0.25em] uppercase">
-                Creative Studio · Est. 2026
+                Full Stack Developer · Est. 2026
               </span>
             </div>
           </header>
@@ -124,10 +124,10 @@ export default function MainSequence() {
                 className="text-[clamp(2.5rem,10vw,7.5rem)] font-extrabold tracking-tighter text-white drop-shadow-2xl leading-none"
                 style={{ fontFamily: "var(--font-outfit)" }}
               >
-                AM <span className="text-red-500">Designs</span>
+                Dhruva <span className="text-red-500">Kushwaha</span>
               </h1>
               <p className="mt-4 text-xs md:text-sm font-mono tracking-[0.35em] text-neutral-400 uppercase">
-                Graphic Design &amp; Video Editing
+                Full Stack Developer · Backend Focused
               </p>
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 {services.map((s, i) => (
@@ -152,12 +152,12 @@ export default function MainSequence() {
               <footer className="flex justify-between items-center text-[10px] font-mono tracking-widest text-neutral-500 uppercase">
                 <span className="flex items-center gap-2">
                   <span className="inline-block animate-bounce">↓</span>
-                  Scroll to explore our work
+                  Scroll to explore my work
                 </span>
                 <div className="hidden md:flex items-center gap-6">
-                  <span>Photo · Video · Shorts · Thumbnails</span>
+                  <span>Go · TypeScript · Postgres · Next.js</span>
                   <span className="text-neutral-700">|</span>
-                  <span>Based in India</span>
+                  <span>Bhopal, India</span>
                 </div>
               </footer>
             </div>
@@ -172,7 +172,7 @@ export default function MainSequence() {
         >
           {/* Label */}
           <p className="text-[12px] font-mono tracking-[0.4em] text-white uppercase mb-6">
-            What We Do
+            What I Do
           </p>
 
           {/* Services — wrap on small screens */}

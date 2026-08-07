@@ -52,15 +52,15 @@ export default function CTASection() {
           className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6"
           style={{ fontFamily: "var(--font-outfit)" }}
         >
-          Got an idea in mind?
+          Got something to build?
           <br />
-          Let&apos;s make it <span className="gradient-text">happen</span>.
+          Let&apos;s <span className="gradient-text">ship</span> it.
         </h2>
         <p className="text-neutral-400 text-sm md:text-base lg:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
-          Whether you need a fresh brand identity, photo retouching, or fast-paced video edits for your channel, we&apos;d love to work together.
+          Whether it is an API that needs to hold up under load, a full stack build, a frontend rewrite, or a custom Shopify storefront — I would like to hear about it.
         </p>
         <a
-          href="mailto:hello@amdesigns.com"
+          href="mailto:rdhruva12345@gmail.com"
           className="inline-flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 bg-red-600 text-white font-bold text-xs uppercase tracking-widest hover:bg-red-500 hover:shadow-[0_0_30px_rgba(220,38,38,0.4)] transition-all duration-300 hover:-translate-y-0.5"
           style={{ fontFamily: "var(--font-outfit)" }}
         >

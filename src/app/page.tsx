@@ -1,7 +1,6 @@
 import MainSequence from "@/components/MainSequence";
 import WorksSection from "@/components/WorksSection";
 import ServicesSection from "@/components/ServicesSection";
-import TestimonialsSection from "@/components/TestimonialsSection";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import FooterLore from "@/components/FooterLore";
@@ -13,7 +12,6 @@ export default function HomePage() {
       <MainSequence />
       <ServicesSection />
       <WorksSection />
-      <TestimonialsSection />
       <CTASection />
       <FooterLore />
       <Footer />

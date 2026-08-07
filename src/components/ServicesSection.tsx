@@ -11,35 +11,35 @@ const RED = "var(--color-red-600)";
 const works = [
   {
     id: "01",
-    category: "Photo Editing",
-    title: "Cinematic Retouch",
+    category: "Backend",
+    title: "APIs & Services",
     description:
-      "High-end portrait retouching with mood-driven colour science and natural skin textures.",
-    tags: ["Retouching", "Color Grading"],
+      "REST APIs in Go and Node, relational data modelling, role-based access control, WebSockets, and the caching and queue work that keeps them fast under load.",
+    tags: ["Golang", "Gin", "Node.js", "PostgreSQL", "Redis"],
   },
   {
     id: "02",
-    category: "Video Editing",
-    title: "Cinematic Cuts",
+    category: "Full Stack",
+    title: "End-to-End Features",
     description:
-      "Fast-paced edits built for engagement in promos, ads, and long-form content with sharp sound design.",
-    tags: ["Promos", "Long-form", "Sound Design"],
+      "Whole features owned from schema to interface. Backend-first, so the frontend is not left fighting a data model that will not bend.",
+    tags: ["Next.js", "TypeScript", "Drizzle", "Prisma", "Docker"],
   },
   {
     id: "03",
-    category: "Shorts",
-    title: "Viral Short-Form",
+    category: "Frontend",
+    title: "React Interfaces",
     description:
-      "Punchy, scroll-stopping short-form videos optimised for Reels, YouTube Shorts, and TikTok.",
-    tags: ["Reels", "YT Shorts", "TikTok"],
+      "Next.js App Router frontends built for real payloads and slow networks — loading, empty, and error states included, not just the happy path.",
+    tags: ["React", "Next.js", "Tailwind", "Socket.IO"],
   },
   {
     id: "04",
-    category: "Thumbnail Design",
-    title: "Click-Worthy Thumbnails",
+    category: "Shopify",
+    title: "Storefronts & Apps",
     description:
-      "Bold, high-contrast thumbnails designed to maximise click-through rates across platforms.",
-    tags: ["YouTube", "Clickbait-Free", "CTR"],
+      "Custom themes, private apps, and headless storefronts — Liquid, checkout extensions, webhooks, and the Admin API wired into your own systems.",
+    tags: ["Liquid", "Hydrogen", "Admin API", "Webhooks"],
   },
 ];
 
@@ -149,20 +149,20 @@ export default function ServicesSection() {
         {/* Section heading */}
         <div ref={headingRef} className="mb-12 md:mb-20">
           <span className="text-[10px] md:text-[11px] font-mono tracking-[0.35em] text-red-600 uppercase block mb-3">
-            What We Offer
+            What I Do
           </span>
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-6">
             <h2
               className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-normal text-white leading-none"
               style={{ fontFamily: "var(--font-outfit)" }}
             >
-              Our{" "}
+              My{" "}
               <span className="text-red-600">
                 Services
               </span>
             </h2>
             <p className="hidden sm:block text-sm text-neutral-400 max-w-xs font-mono tracking-wide leading-relaxed">
-              High-end post-production, photo editing, short-form edits, and thumbnail design.
+              Backend systems, full stack product work, React frontends, and custom Shopify builds.
             </p>
           </div>
           {/* Red accent bar */}
