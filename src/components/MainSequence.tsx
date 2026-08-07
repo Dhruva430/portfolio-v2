@@ -120,11 +120,14 @@ export default function MainSequence() {
           {/* Bottom: title block */}
           <div className="flex flex-col gap-0">
             <div ref={titleRef} className="will-change-transform">
+              {/* Stacked: the full name on one line spans the whole frame and
+                  sits over the artwork. Two lines keep it in the lower-left. */}
               <h1
-                className="text-[clamp(2.5rem,10vw,7.5rem)] font-extrabold tracking-tighter text-white drop-shadow-2xl leading-none"
+                className="text-[clamp(2.25rem,8vw,6rem)] font-extrabold tracking-tighter text-white drop-shadow-2xl leading-[0.88]"
                 style={{ fontFamily: "var(--font-outfit)" }}
               >
-                Dhruva <span className="text-red-500">Kushwaha</span>
+                <span className="block">Dhruva</span>
+                <span className="block text-red-500">Kushwaha</span>
               </h1>
               <p className="mt-4 text-xs md:text-sm font-mono tracking-[0.35em] text-neutral-400 uppercase">
                 Full Stack Developer · Backend Focused
