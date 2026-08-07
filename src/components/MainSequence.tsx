@@ -68,8 +68,8 @@ export default function MainSequence() {
     gsap.set(bar,    { scaleX: progress });
 
     // ── Services overlay: "What I Do" ──
-    // Fades IN: 0.38 → 0.54 | Holds: 0.54 → 0.78 | Fades OUT: 0.78 → 0.94
-    const svcFadeIn  = { start: 0.38, end: 0.54 };
+    // Fades IN: 0.30 → 0.54 | Holds: 0.54 → 0.78 | Fades OUT: 0.78 → 0.94
+    const svcFadeIn  = { start: 0.30, end: 0.54 };
     const svcFadeOut = { start: 0.78, end: 0.94 };
     let svcOpacity = 0;
     if (progress >= svcFadeIn.start && progress <= svcFadeIn.end) {
@@ -164,31 +164,31 @@ export default function MainSequence() {
           </div>
         </div>
 
-        {/* ── Services overlay: bottom center, below the eyes ── */}
+        {/* ── Services overlay: bottom-left on mobile, bottom-center on desktop ── */}
         <div
           ref={servicesOverlayRef}
-          className="pointer-events-none absolute inset-0 z-25 flex flex-col items-center justify-end pb-16"
+          className="pointer-events-none absolute inset-0 z-25 flex flex-col items-start justify-end px-6 sm:px-10 pb-10 sm:pb-16 sm:items-center sm:justify-end"
           style={{ opacity: 0 }}
         >
           {/* Label */}
-          <p className="text-[12px] font-mono tracking-[0.4em] text-white uppercase mb-6">
+          <p className="text-xs sm:text-[12px] font-mono tracking-[0.35em] text-red-500 sm:text-white uppercase mb-3 sm:mb-6 text-left sm:text-center">
             What I Do
           </p>
 
-          {/* Services — wrap on small screens */}
-          <div className="flex flex-wrap items-center justify-center gap-y-4 gap-x-0">
+          {/* Services — stacked on mobile, inline/wrap on desktop */}
+          <div className="flex flex-col items-start gap-3 sm:gap-y-4 sm:gap-x-0 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center w-full sm:w-auto">
             {services.map((s, i) => (
-              <div key={s.title} className="flex items-center">
-                {/* Divider between items */}
+              <div key={s.title} className="flex items-start sm:items-center">
+                {/* Divider between items on desktop */}
                 {i > 0 && <div className="hidden sm:block w-px h-8 bg-neutral-700 mx-4 md:mx-8" />}
-                <div className="text-center">
+                <div className="text-left sm:text-center">
                   <h3
-                    className="text-sm sm:text-lg md:text-3xl lg:text-4xl font-extrabold tracking-tight text-white"
+                    className="text-xl sm:text-lg md:text-3xl lg:text-4xl font-black tracking-tight text-white leading-tight"
                     style={{ fontFamily: "var(--font-outfit)" }}
                   >
                     {s.title}
                   </h3>
-                  <p className="mt-1 text-[11px] tracking-widest text-neutral-100 uppercase">
+                  <p className="mt-0.5 sm:mt-1 text-xs sm:text-[11px] tracking-wider text-neutral-400 sm:text-neutral-100 uppercase">
                     {s.desc}
                   </p>
                 </div>
@@ -197,7 +197,7 @@ export default function MainSequence() {
           </div>
 
           {/* Red accent line */}
-          <div className="mt-6 w-12 h-px bg-red-600" />
+          <div className="mt-4 sm:mt-6 w-12 h-px bg-red-600 self-start sm:self-center" />
         </div>
       </CanvasScrubber>
     </section>
