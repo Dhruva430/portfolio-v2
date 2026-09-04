@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
+import { RESUME_FILENAME, RESUME_URL } from "@/lib/constants";
 
 export default function Navbar() {
   const navRef = useRef<HTMLElement>(null);
@@ -67,6 +68,13 @@ export default function Navbar() {
         {/* ── RIGHT: CTA (rectangle) + mobile toggle ── */}
         <div className="flex items-center gap-4">
           <a
+            href={RESUME_URL}
+            download={RESUME_FILENAME}
+            className="hidden md:inline-flex px-6 py-2.5 text-[11px] font-bold uppercase tracking-widest border border-white/20 text-neutral-200 hover:border-red-500 hover:text-white transition-colors duration-200"
+          >
+            Resume
+          </a>
+          <a
             href="#contact"
             onClick={(e) => handleClick(e, "#contact")}
             className="hidden md:inline-flex px-6 py-2.5 text-[11px] font-bold uppercase tracking-widest bg-red-600 text-white hover:bg-red-500 transition-colors duration-200 hover:shadow-[0_0_20px_rgba(220,38,38,0.35)]"
@@ -100,9 +108,17 @@ export default function Navbar() {
             </a>
           ))}
           <a
+            href={RESUME_URL}
+            download={RESUME_FILENAME}
+            onClick={() => setMobileOpen(false)}
+            className="mt-2 inline-flex justify-center px-6 py-3 text-sm font-bold uppercase tracking-widest border border-white/20 text-neutral-200 hover:border-red-500 hover:text-white transition-all"
+          >
+            Download Resume
+          </a>
+          <a
             href="#contact"
             onClick={(e) => handleClick(e, "#contact")}
-            className="mt-2 inline-flex justify-center px-6 py-3 text-sm font-bold uppercase tracking-widest bg-red-600 text-white hover:bg-red-500 transition-all"
+            className="inline-flex justify-center px-6 py-3 text-sm font-bold uppercase tracking-widest bg-red-600 text-white hover:bg-red-500 transition-all"
           >
             Get in Touch
           </a>

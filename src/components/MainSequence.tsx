@@ -95,7 +95,9 @@ export default function MainSequence() {
       <CanvasScrubber
         framePath="main"
         totalFrames={66}
-        scrollMultiplier={1.2}
+        // 0.6 = half the old 1.2, so the frame scrub covers half the scroll
+        // distance and the frames advance twice as fast per unit of scroll.
+        scrollMultiplier={0.6}
         onProgress={handleProgress}
         onComplete={handleSequenceComplete}
         priority
