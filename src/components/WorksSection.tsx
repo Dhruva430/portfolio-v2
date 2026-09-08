@@ -39,6 +39,8 @@ interface Project {
   year: string;
   repo?: string;
   live?: string;
+  /** Optional preview image, shown as a banner on the card. */
+  image?: string;
   /** Rendered as a small badge — e.g. work-in-progress entries. */
   status?: string;
 }
@@ -53,6 +55,7 @@ const projects: Project[] = [
     stack: ["Golang", "Gin", "Next.js", "PostgreSQL", "Redis", "Docker"],
     year: "2025–2026",
     live: "https://hauldrive.com/",
+    image: "/works/projects/hauldrive.png",
   },
   {
     id: "02",
@@ -64,6 +67,7 @@ const projects: Project[] = [
     year: "2026",
     repo: "https://github.com/finalistbot/",
     live: "https://finalist.live",
+    image: "/works/projects/finalist.png",
   },
   {
     id: "03",
@@ -96,6 +100,39 @@ const projects: Project[] = [
     year: "2025",
     repo: "https://github.com/Dhruva430/url_shortner",
   },
+  {
+    id: "06",
+    title: "Hotel Moana",
+    outcome:
+      "Luxury hotel landing and booking site with an immersive hero and a conversion-focused booking flow — freelance client build.",
+    discipline: "Frontend",
+    stack: ["Next.js", "React", "TypeScript", "Tailwind CSS", "Framer Motion"],
+    year: "2025",
+    live: "https://hotelmoana.demos.levaras.com/",
+    image: "/works/projects/hotel-moana.webp",
+  },
+  {
+    id: "07",
+    title: "Heenzy",
+    outcome:
+      "Streetwear and sneaker e-commerce storefront with product drops and a bold, editorial shopping experience — freelance client build.",
+    discipline: "Frontend",
+    stack: ["Next.js", "React", "TypeScript", "Tailwind CSS", "Stripe"],
+    year: "2025",
+    live: "https://heenzy.demos.levaras.com/",
+    image: "/works/projects/heenzy.jpg",
+  },
+  {
+    id: "08",
+    title: "Auresca Care",
+    outcome:
+      "Boutique skin, hair and aesthetics clinic site with service showcases and a free-consultation lead capture — freelance client build.",
+    discipline: "Frontend",
+    stack: ["Next.js", "React", "TypeScript", "Tailwind CSS"],
+    year: "2025",
+    live: "https://auresca.vercel.app/",
+    image: "/works/projects/auresca-care.png",
+  },
 ];
 
 /* ── Card ─────────────────────────────────────────────────────────── */
@@ -110,10 +147,31 @@ function ProjectCard({
   return (
     <div
       ref={cardRef}
-      className="group relative flex flex-col h-full p-6 md:p-8 bg-black/40 border border-neutral-900 rounded-xl transition-colors duration-500 hover:border-red-900/60"
+      className="group relative flex flex-col h-full bg-black/40 border border-neutral-900 rounded-xl transition-colors duration-500 hover:border-red-900/60"
     >
-      {/* Index + discipline */}
-      <div className="flex items-center justify-between mb-5">
+      {/* Preview image (only when provided) */}
+      {project.image && (
+        <a
+          href={project.live ?? project.repo ?? undefined}
+          target={project.live || project.repo ? "_blank" : undefined}
+          rel="noopener noreferrer"
+          className="relative block aspect-[16/10] overflow-hidden rounded-t-xl border-b border-neutral-900"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={project.image}
+            alt={`${project.title} preview`}
+            loading="lazy"
+            className="h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+        </a>
+      )}
+
+      {/* Content */}
+      <div className="flex flex-col flex-grow p-6 md:p-8">
+        {/* Index + discipline */}
+        <div className="flex items-center justify-between mb-5">
         <span className="text-[11px] font-mono tracking-[0.3em] text-neutral-600">
           {project.id}
         </span>
@@ -178,9 +236,10 @@ function ProjectCard({
           )}
         </div>
       </div>
+      </div>
 
       {project.status && (
-        <span className="absolute top-0 right-6 -translate-y-1/2 text-[9px] font-mono tracking-[0.2em] uppercase text-amber-500/90 bg-[#0a0a0a] border border-amber-900/50 rounded px-2 py-0.5">
+        <span className="absolute top-0 right-6 -translate-y-1/2 text-[9px] font-mono tracking-[0.2em] uppercase text-amber-500/90 bg-[#0a0a0a] border border-amber-900/50 rounded px-2 py-0.5 z-10">
           {project.status}
         </span>
       )}
